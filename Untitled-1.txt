@@ -1,0 +1,34 @@
+
+<VirtualHost *:80>
+    ServerName 157.173.125.86
+
+    # Frontend
+    DocumentRoot /var/www/store/client/build
+    <Directory /var/www/store/client/build>
+        Options -Indexes +FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # Backend API Proxy
+    ProxyPass /api http://127.0.0.1:8000/api
+    ProxyPassReverse /api http://127.0.0.1:8000/api
+
+    ErrorLog ${APACHE_LOG_DIR}/store_error.log
+    CustomLog ${APACHE_LOG_DIR}/store_access.log combined
+</VirtualHost>
+
+
+<VirtualHost *:80>
+    ServerAdmin admin@157.173.125.86
+    DocumentRoot /var/www/Comet-Inventory-System/public
+    ServerName 157.173.125.86
+
+    <Directory /var/www/Comet-Inventory-System/public>
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog ${APACHE_LOG_DIR}/comet-inventory-system-error.log
+    CustomLog ${APACHE_LOG_DIR}/comet-inventory-system-access.log combined
+</VirtualHost>
