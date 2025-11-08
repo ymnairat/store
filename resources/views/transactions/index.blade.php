@@ -74,8 +74,9 @@
 </div>
 
 <!-- Add Transaction Modal -->
+<!-- Add Transaction Modal -->
 <div class="modal fade" id="addTransactionModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">إضافة حركة جديدة</h5>
@@ -83,6 +84,8 @@
             </div>
             <form id="transactionForm">
                 <div class="modal-body">
+
+                    <!-- نوع الحركة -->
                     <div class="mb-3">
                         <label class="form-label">نوع الحركة <span class="text-danger">*</span></label>
                         <select class="form-select" id="transactionType" name="type" required>
@@ -91,7 +94,8 @@
                         </select>
                     </div>
 
-                    <div class="mb-3">
+                    <!-- المخزن -->
+                    <div class="mb-3" id="warehouseSection">
                         <label class="form-label">المخزن <span class="text-danger">*</span></label>
                         <select class="form-select" id="transactionWarehouse" name="warehouse_id" required>
                             <option value="">اختر مخزن</option>
@@ -101,36 +105,47 @@
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">المنتج <span class="text-danger">*</span></label>
-                        <select class="form-select" id="transactionProduct" name="product_id" required>
-                            <option value="">اختر منتج</option>
-                            @foreach($products as $product)
-                                <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->code }})</option>
-                            @endforeach
-                        </select>
-                    </div>
+                    <!-- نقل بين المخازن -->
+                    <div id="warehouseTransferSection" class="mb-3 p-3 bg-success bg-opacity-10 rounded border" style="display:none;">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="isWarehouseTransfer">
+                            <label class="form-check-label fw-semibold text-success" for="isWarehouseTransfer">
+                                نقل بين المخازن
+                            </label>
+                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">الكمية <span class="text-danger">*</span></label>
-                        <input type="number" class="form-control" id="transactionQuantity" name="quantity" value="1" min="0.01" step="0.01" required>
-                    </div>
-
-                    <!-- Team Transfer Section (only for 'out' type) -->
-                    <div id="teamTransferSection" class="mb-3 p-3 bg-light rounded border" style="display: none;">
-                        <div class="mb-2">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="isReturnCheck">
-                                <label class="form-check-label" for="isReturnCheck">
-                                    إرجاع منتج تم نقله سابقاً
-                                </label>
+                        <div id="warehouseTransferFields" style="display:none;">
+                            <div class="mb-2">
+                                <label class="form-label small">من مخزن *</label>
+                                <select class="form-select form-select-sm" id="warehouseFrom" name="warehouse_from_id">
+                                    <option value="">اختر المخزن المصدر</option>
+                                    @foreach($warehouses as $warehouse)
+                                        <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">إلى مخزن *</label>
+                                <select class="form-select form-select-sm" id="warehouseTo" name="warehouse_to_id" disabled>
+                                    <option value="">اختر المخزن المصدر أولاً</option>
+                                </select>
                             </div>
                         </div>
-                        
-                        <div id="teamTransferFields" style="display: none;">
-                            <label class="form-label fw-semibold text-primary mb-2">نقل بين الفِرق (اختياري)</label>
+                        <p class="text-success small mt-1">💡 سيتم نقل المنتج من المخزن المصدر إلى المخزن الوجهة تلقائياً</p>
+                    </div>
+
+                    <!-- Team Transfer Section -->
+                    <div id="teamTransferSection" class="mb-3 p-3 bg-primary bg-opacity-10 rounded border" style="display:none;">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" disabled="true" type="checkbox" id="isReturnCheck">
+                            <label class="form-check-label fw-semibold text-primary" for="isReturnCheck">
+                                نقل بين الفرق
+                            </label>
+                        </div>
+
+                        <div id="teamTransferFields">
                             <div class="mb-2">
-                                <label class="form-label small">من فريق</label>
+                                <label class="form-label small">من فريق *</label>
                                 <select class="form-select form-select-sm" id="fromTeam" name="from_team_id">
                                     <option value="">اختر الفريق المصدر</option>
                                     @foreach($teams as $team)
@@ -139,23 +154,59 @@
                                 </select>
                             </div>
                             <div class="mb-2">
-                                <label class="form-label small">إلى فريق</label>
+                                <label class="form-label small">إلى فريق *</label>
                                 <select class="form-select form-select-sm" id="toTeam" name="to_team_id" disabled>
                                     <option value="">اختر الفريق المصدر أولاً</option>
                                 </select>
                             </div>
+                            <p class="text-primary small mt-1">💡 سيتم نقل المنتج من الفريق المصدر إلى الفريق الوجهة تلقائياً</p>
                         </div>
                     </div>
 
+                    <!-- المنتجات -->
                     <div class="mb-3">
-                        <label class="form-label">السيريال نمبر / الباركود</label>
-                        <input type="text" class="form-control" id="transactionSerial" name="serial_number" placeholder="4444 أو امسح الباركود">
+                        <label class="form-label">المنتج <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <select class="form-select" id="transactionProduct" name="product_id" required>
+                                <option value="">اختر منتج أو امسح الباركود</option>
+                                @foreach($products as $product)
+                                    <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->code }})</option>
+                                @endforeach
+                            </select>
+                            <button type="button" class="btn btn-outline-secondary" id="scanProductBtn" title="مسح باركود/QR Code للمنتج">
+                                <i class="bi bi-upc-scan"></i>
+                            </button>
+                        </div>
+                        <div id="selectedProductInfo" class="mt-2 p-2 bg-success bg-opacity-10 rounded" style="display:none;">
+                            <strong id="selectedProductName"></strong>
+                            <small id="selectedProductCode" class="d-block"></small>
+                        </div>
                     </div>
 
+                    <!-- الكمية -->
+                    <div class="mb-3">
+                        <label class="form-label">الكمية <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="transactionQuantity" name="quantity" value="1" min="0.01" step="0.01" required>
+                    </div>
+
+                    <!-- السيريال نمبر / الباركود -->
+                    <div class="mb-3">
+                        <label class="form-label">السيريال نمبر / الباركود</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="transactionSerial" name="serial_number" placeholder="4444 أو امسح الباركود">
+                            <button type="button" class="btn btn-outline-secondary" id="scanSerialBtn" title="مسح السيريال نمبر">
+                                <i class="bi bi-camera"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">يمكنك إدخاله يدوياً أو مسحه من الباركود/QR Code</small>
+                    </div>
+
+                    <!-- الملاحظات -->
                     <div class="mb-3">
                         <label class="form-label">ملاحظات</label>
                         <textarea class="form-control" id="transactionNotes" name="notes" rows="3"></textarea>
                     </div>
+
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
@@ -166,92 +217,121 @@
     </div>
 </div>
 
+
 @push('scripts')
 <script>
 let teamsData = @json($teams);
+let allProductsData = @json($allProducts ?? $products);
+let warehousesData = @json($warehouses);
 
-$('#transactionType').on('change', function() {
+// إظهار/إخفاء الأقسام حسب نوع الحركة
+$('#transactionType').on('change', function(){
     const isOut = $(this).val() === 'out';
     $('#teamTransferSection').toggle(isOut);
+    $('#warehouseTransferSection').toggle(isOut);
 });
 
-$('#fromTeam').on('change', function() {
-    const fromTeamId = $(this).val();
-    const toSelect = $('#toTeam');
-    
-    toSelect.prop('disabled', !fromTeamId);
-    toSelect.html('<option value="">اختر الفريق الوجهة</option>');
-    
-    if (fromTeamId) {
-        teamsData.forEach(function(team) {
-            if (team.id !== fromTeamId) {
-                toSelect.append(`<option value="${team.id}">${team.name}</option>`);
-            }
+// تفعيل/تعطيل نقل بين المخازن
+$('#isWarehouseTransfer').on('change', function(){
+    $('#isReturnCheck').prop('checked', false);
+    $('#isWarehouseTransfer').prop('disabled', true);
+    $('#isReturnCheck').prop('disabled', false);
+    $('#teamTransferFields').toggle(!$(this).is(':checked'));
+    $('#warehouseTransferFields').toggle($(this).is(':checked'));
+});
+
+// تفعيل/تعطيل حقل المخزن الوجهة
+$('#warehouseFrom').on('change', function(){
+    const fromId = $(this).val();
+    const toSelect = $('#warehouseTo');
+    toSelect.prop('disabled', !fromId);
+    toSelect.html('<option value="">اختر المخزن الوجهة</option>');
+
+    if(fromId){
+        warehousesData.forEach(w => {
+            if(w.id != fromId) toSelect.append(`<option value="${w.id}">${w.name}</option>`);
         });
     }
 });
 
-$('#isReturnCheck').on('change', function() {
-    $('#teamTransferFields').toggle(!$(this).is(':checked'));
+// إظهار/إخفاء نقل الفرق عند الإرجاع
+$('#isReturnCheck').on('change', function(){
+    $('#isWarehouseTransfer').prop('checked', false);
+    $('#isWarehouseTransfer').prop('disabled', false);
+    $('#isReturnCheck').prop('disabled', true);
+    $('#warehouseTransferFields').toggle(!$(this).is(':checked'));
+    $('#teamTransferFields').toggle($(this).is(':checked'));
 });
 
-$('#transactionForm').on('submit', function(e) {
+// تفعيل/تعطيل الفرق الوجهة
+$('#fromTeam').on('change', function(){
+    const fromId = $(this).val();
+    const toSelect = $('#toTeam');
+    toSelect.prop('disabled', !fromId);
+    toSelect.html('<option value="">اختر الفريق الوجهة</option>');
+
+    if(fromId){
+        teamsData.forEach(t => { if(t.id != fromId) toSelect.append(`<option value="${t.id}">${t.name}</option>`); });
+        // فلترة المنتجات حسب الفريق
+        const filteredProducts = allProductsData.filter(p => p.teams?.some(t => t.id == fromId));
+        const productSelect = $('#transactionProduct');
+        productSelect.html('<option value="">اختر منتج أو امسح الباركود</option>');
+        filteredProducts.forEach(p => productSelect.append(`<option value="${p.id}">${p.name} (${p.code})</option>`));
+    }
+});
+
+// عرض المنتج المختار
+$('#transactionProduct').on('change', function(){
+    const id = $(this).val();
+    const product = allProductsData.find(p => p.id == id);
+    if(product){
+        $('#selectedProductName').text(product.name);
+        $('#selectedProductCode').text(product.code);
+        $('#selectedProductInfo').show();
+    } else $('#selectedProductInfo').hide();
+});
+
+// إرسال الفورم
+$('#transactionForm').on('submit', function(e){
     e.preventDefault();
-    
-    const formData = {
-        product_id: $('#transactionProduct').val(),
-        warehouse_id: $('#transactionWarehouse').val(),
+    let formData = {
         type: $('#transactionType').val(),
+        warehouse_id: $('#transactionWarehouse').val(),
+        product_id: $('#transactionProduct').val(),
         quantity: parseFloat($('#transactionQuantity').val()),
         serial_number: $('#transactionSerial').val() || null,
         notes: $('#transactionNotes').val() || null,
         is_return: $('#isReturnCheck').is(':checked')
     };
-    
-    if ($('#transactionType').val() === 'out' && $('#fromTeam').val() && $('#toTeam').val()) {
-        formData.from_team_id = $('#fromTeam').val();
-        formData.to_team_id = $('#toTeam').val();
+
+    if($('#isWarehouseTransfer').is(':checked')){
+        formData.warehouse_from_id = $('#warehouseFrom').val();
+        formData.warehouse_to_id = $('#warehouseTo').val();
     }
-    
+
+    if($('#transactionType').val() === 'out'){
+        if($('#fromTeam').val()) formData.from_team_id = $('#fromTeam').val();
+        if($('#toTeam').val()) formData.to_team_id = $('#toTeam').val();
+    }
+
     $.ajax({
         url: '{{ route("transactions.store") }}',
         method: 'POST',
         data: formData,
-        success: function(response) {
-            showAlert(response.message || 'تمت إضافة الحركة بنجاح', 'success');
+        success: function(res){
+            alert(res.message || 'تمت إضافة الحركة بنجاح');
             $('#addTransactionModal').modal('hide');
             $('#transactionForm')[0].reset();
-            setTimeout(() => window.location.reload(), 1000);
+            $('#teamTransferFields, #warehouseTransferFields, #selectedProductInfo').hide();
+            setTimeout(()=> location.reload(), 800);
         },
-        error: function(xhr) {
-            const error = xhr.responseJSON?.error || xhr.responseJSON?.message || 'حدث خطأ في إنشاء الحركة';
-            showAlert(error, 'danger');
+        error: function(xhr){
+            alert(xhr.responseJSON?.message || 'حدث خطأ');
         }
     });
-});
-
-function deleteTransaction(id) {
-    if (!confirm('هل أنت متأكد من حذف هذه الحركة؟')) return;
-    
-    $.ajax({
-        url: '{{ route("transactions.destroy", ":id") }}'.replace(':id', id),
-        method: 'DELETE',
-        success: function(response) {
-            showAlert(response.message || 'تم حذف الحركة بنجاح', 'success');
-            $(`#transaction-row-${id}`).fadeOut(function() {
-                $(this).remove();
-            });
-        },
-        error: function() {
-            showAlert('حدث خطأ في حذف الحركة', 'danger');
-        }
-    });
-}
-
-$('#addTransactionModal').on('hidden.bs.modal', function() {
-    $('#transactionForm')[0].reset();
 });
 </script>
+
 @endpush
 @endsection
 
