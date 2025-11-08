@@ -27,6 +27,7 @@
                             <th>الكمية</th>
                             <th>السيريال</th>
                             <th>التاريخ</th>
+                            <th>المنشئ</th>
                             <th>الملاحظات</th>
                             <th class="text-end">إجراءات</th>
                         </tr>
@@ -52,6 +53,7 @@
                             <td>{{ $transaction->quantity }}</td>
                             <td>{{ $transaction->serial_number ?? '-' }}</td>
                             <td>{{ $transaction->created_at->format('Y-m-d H:i') }}</td>
+                            <td>{{ $transaction->createdBy->name }}</td>
                             <td class="text-truncate" style="max-width: 200px;" title="{{ $transaction->notes ?? '' }}">{{ $transaction->notes ?? '-' }}</td>
                             <td class="text-end">
                                 @can('transactions.delete')
