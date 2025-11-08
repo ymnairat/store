@@ -77,7 +77,7 @@
 <!-- Add Transaction Modal -->
 <div class="modal fade" id="addTransactionModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
+        <div class="modal-content" style="overflow: auto;">
             <div class="modal-header">
                 <h5 class="modal-title">إضافة حركة جديدة</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>

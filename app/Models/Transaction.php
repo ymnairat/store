@@ -58,4 +58,14 @@ class Transaction extends Model
     {
         return $this->belongsTo(Transaction::class, 'transfer_transaction_id');
     }
+
+    public function warehouseFrom(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_from_id');
+    }
+
+    public function warehouseTo(): BelongsTo
+    {
+        return $this->belongsTo(Warehouse::class, 'warehouse_to_id');
+    }
 }

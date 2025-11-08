@@ -97,17 +97,17 @@
                         <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="userName" name="name" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">اسم المستخدم <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="userUsername" name="username" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">البريد الإلكتروني <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="userEmail" name="email" required>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">
                             كلمة المرور <span id="passwordRequired" class="text-danger">*</span>
@@ -115,12 +115,12 @@
                         </label>
                         <input type="password" class="form-control" id="userPassword" name="password">
                     </div>
-                    
+
                     <div class="mb-3" id="passwordConfirmationField">
                         <label class="form-label">تأكيد كلمة المرور <span class="text-danger">*</span></label>
                         <input type="password" class="form-control" id="userPasswordConfirmation" name="password_confirmation">
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">الأدوار</label>
                         <div class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
@@ -132,7 +132,7 @@
                             @endforeach
                         </div>
                     </div>
-                    
+
                     <div class="mb-3">
                         <label class="form-label">الفِرق المسؤولة</label>
                         <div class="border rounded p-3" style="max-height: 150px; overflow-y: auto;">
@@ -174,7 +174,7 @@ function openUserModal() {
 function editUser(id) {
     const user = usersData.find(u => u.id === id);
     if (!user) return;
-    
+
     $('#userModalTitle').text('تعديل مستخدم');
     $('#userId').val(user.id);
     $('#userName').val(user.name);
@@ -182,31 +182,31 @@ function editUser(id) {
     $('#userEmail').val(user.email);
     $('#userPassword').val('');
     $('#userPasswordConfirmation').val('');
-    
+
     $('#passwordRequired').hide();
     $('#passwordHint').removeClass('d-none');
     $('#passwordConfirmationField').hide();
-    
+
     $('input[name="roles[]"], input[name="team_ids[]"]').prop('checked', false);
-    
+
     if (user.roles) {
         user.roles.forEach(function(role) {
             $(`#role_${role.id}`).prop('checked', true);
         });
     }
-    
+
     if (user.teams) {
         user.teams.forEach(function(team) {
             $(`#user_team_${team.id}`).prop('checked', true);
         });
     }
-    
+
     $('#userModal').modal('show');
 }
 
 $('#userForm').on('submit', function(e) {
     e.preventDefault();
-    
+
     const formData = {
         name: $('#userName').val(),
         username: $('#userUsername').val(),
@@ -218,10 +218,10 @@ $('#userForm').on('submit', function(e) {
             return $(this).val();
         }).get()
     };
-    
+
     const password = $('#userPassword').val();
     const userId = $('#userId').val();
-    
+
     if (userId && !password) {
         // Don't send password if editing and empty
     } else if (!userId && !password) {
@@ -231,12 +231,12 @@ $('#userForm').on('submit', function(e) {
         formData.password = password;
         formData.password_confirmation = $('#userPasswordConfirmation').val();
     }
-    
-    const url = userId 
+
+    const url = userId
         ? '{{ route("users.update", ":id") }}'.replace(':id', userId)
         : '{{ route("users.store") }}';
     const method = userId ? 'PUT' : 'POST';
-    
+
     $.ajax({
         url: url,
         method: method,
@@ -255,7 +255,7 @@ $('#userForm').on('submit', function(e) {
 
 function deleteUser(id) {
     if (!confirm('هل أنت متأكد من حذف هذا المستخدم؟')) return;
-    
+
     $.ajax({
         url: '{{ route("users.destroy", ":id") }}'.replace(':id', id),
         method: 'DELETE',
