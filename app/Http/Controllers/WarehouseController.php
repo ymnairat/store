@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Warehouse;
 use App\Models\Team;
+use App\Models\Transaction;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -21,7 +23,7 @@ class WarehouseController extends Controller
     public function index()
     {
         $query = Warehouse::with('teams');
-        
+
         $user = Auth::user();
         if (!$user->hasRole('admin')) {
             $userTeams = $user->teams()->pluck('teams.id')->toArray();
@@ -31,10 +33,10 @@ class WarehouseController extends Controller
                 });
             }
         }
-        
+
         $warehouses = $query->get();
         $teams = Team::all();
-        
+
         return view('warehouses.index', compact('warehouses', 'teams'));
     }
 
@@ -57,7 +59,7 @@ class WarehouseController extends Controller
         ]);
 
         $warehouse = Warehouse::create($validated);
-        
+
         if ($request->has('team_ids')) {
             $warehouse->teams()->sync($request->team_ids);
         }
@@ -82,19 +84,57 @@ class WarehouseController extends Controller
     public function details(Warehouse $warehouse)
     {
         $warehouse->load('teams');
-        $inventory = \App\Models\Transaction::select([
-                'product_id',
-                'warehouse_id',
-                \Illuminate\Support\Facades\DB::raw('SUM(CASE WHEN type = "in" THEN quantity ELSE -quantity END) as quantity')
-            ])
-            ->where('warehouse_id', $warehouse->id)
-            ->groupBy('product_id', 'warehouse_id')
-            ->having('quantity', '>', 0)
-            ->with('product')
-            ->get();
-        
-        $products = \App\Models\Product::all();
-        
+        $user = Auth::user();
+
+        // 1️⃣ Get the IDs of the user’s and warehouse’s teams
+        $userTeamIds = $user->teams()->pluck('teams.id')->toArray();
+        $warehouseTeamIds = $warehouse->teams()->pluck('teams.id')->toArray();
+
+        // 2️⃣ Find teams shared between user and warehouse
+        $sharedTeamIds = array_intersect($userTeamIds, $warehouseTeamIds);
+
+        // 3️⃣ Handle case where no shared teams exist (for non-admin users)
+        if (empty($sharedTeamIds) && !$user->hasRole('admin')) {
+            $inventory = collect(); // return empty collection
+            $products = collect();  // return empty collection
+        } else {
+            // 4️⃣ Build base inventory query
+            $inventoryQuery = Transaction::select([
+                    'product_id',
+                    'warehouse_id',
+                    \DB::raw('SUM(CASE WHEN type = "in" THEN quantity ELSE -quantity END) as quantity'),
+                ])
+                ->where('warehouse_id', $warehouse->id);
+
+            // 🔒 Apply team restriction for non-admins
+            if (!$user->hasRole('admin')) {
+                $inventoryQuery->whereHas('product.teams', function ($query) use ($sharedTeamIds) {
+                    $query->whereIn('teams.id', $sharedTeamIds);
+                });
+            }
+
+            // 5️⃣ Execute inventory query
+            $inventory = $inventoryQuery
+                ->groupBy('product_id', 'warehouse_id')
+                ->having('quantity', '>', 0)
+                ->with(['product' => function ($query) {
+                    $query->select('id', 'name', 'code', 'price');
+                }])
+                ->get();
+
+            // 6️⃣ Optionally, fetch the related products
+            $productsQuery = Product::with('teams');
+
+            if (!$user->hasRole('admin')) {
+                $productsQuery->whereHas('teams', function ($query) use ($sharedTeamIds) {
+                    $query->whereIn('teams.id', $sharedTeamIds);
+                });
+            }
+
+            $products = $productsQuery->get();
+        }
+
+        // 7️⃣ Return view with all data
         return view('warehouses.details', compact('warehouse', 'inventory', 'products'));
     }
 
@@ -118,7 +158,7 @@ class WarehouseController extends Controller
         ]);
 
         $warehouse->update($validated);
-        
+
         if ($request->has('team_ids')) {
             $warehouse->teams()->sync($request->team_ids);
         } else {
